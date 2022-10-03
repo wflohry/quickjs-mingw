@@ -502,19 +502,35 @@ int JS_IsRegisteredClass(JSRuntime *rt, JSClassID class_id);
 
 /* value handling */
 
+#if defined(_MSC_VER) && defined(__cplusplus)
+#define USE_STRICT_INITIALIZATION 1
+#endif
+
 static js_force_inline JSValue JS_NewBool(JSContext *ctx, JS_BOOL val)
 {
+#if defined(USE_STRICT_INITIALIZATION)
+    return JSValue{ .u = JSValueUnion{.int32 = val != 0}, .tag = JS_TAG_BOOL,};
+#else
     return JS_MKVAL(JS_TAG_BOOL, (val != 0));
+#endif
 }
 
 static js_force_inline JSValue JS_NewInt32(JSContext *ctx, int32_t val)
 {
+#if defined(USE_STRICT_INITIALIZATION)
+    return JSValue{ .u = JSValueUnion {.int32 = val}, .tag = JS_TAG_INT };
+#else
     return JS_MKVAL(JS_TAG_INT, val);
+#endif
 }
 
 static js_force_inline JSValue JS_NewCatchOffset(JSContext *ctx, int32_t val)
 {
+#if defined(USE_STRICT_INITIALIZATION)
+    return JSValue{ .u = JSValueUnion{.int32 = val}, .tag = JS_TAG_INT };
+#else
     return JS_MKVAL(JS_TAG_CATCH_OFFSET, val);
+#endif
 }
 
 static js_force_inline JSValue JS_NewInt64(JSContext *ctx, int64_t val)
@@ -556,7 +572,11 @@ static js_force_inline JSValue JS_NewFloat64(JSContext *ctx, double d)
     /* -0 cannot be represented as integer, so we compare the bit
         representation */
     if (u.u == t.u) {
+#if defined(USE_STRICT_INITIALIZATION)
+        v = JSValue{ .u = JSValueUnion {.int32 = val}, .tag = JS_TAG_INT };
+#else
         v = JS_MKVAL(JS_TAG_INT, val);
+#endif
     } else {
         v = __JS_NewFloat64(ctx, d);
     }
@@ -666,7 +686,11 @@ static inline JSValue JS_DupValue(JSContext *ctx, JSValueConst v)
         JSRefCountHeader *p = (JSRefCountHeader *)JS_VALUE_GET_PTR(v);
         p->ref_count++;
     }
+#if defined(USE_STRICT_INITIALIZATION)
+    return v;
+#else
     return (JSValue)v;
+#endif
 }
 
 static inline JSValue JS_DupValueRT(JSRuntime *rt, JSValueConst v)
@@ -675,7 +699,11 @@ static inline JSValue JS_DupValueRT(JSRuntime *rt, JSValueConst v)
         JSRefCountHeader *p = (JSRefCountHeader *)JS_VALUE_GET_PTR(v);
         p->ref_count++;
     }
+#if defined(USE_STRICT_INITIALIZATION)
+    return v;
+#else
     return (JSValue)v;
+#endif
 }
 
 int JS_ToBool(JSContext *ctx, JSValueConst val); /* return -1 for JS_EXCEPTION */
