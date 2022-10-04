@@ -7501,8 +7501,18 @@ static inline __m256d ntt_mul_mod(__m256d a, __m256d b, __m256d mf,
     ab1 = a * b;
     q = _mm256_round_pd(ab1 * m_inv, 0); /* round to nearest */
     qm1 = q * mf;
+
+#if defined(__FMA__) || defined(_MSC_VER)
     qm0 = _mm256_fmsub_pd(q, mf, qm1); /* low part */
     ab0 = _mm256_fmsub_pd(a, b, ab1); /* low part */
+#else
+    __m256d t = _mm256_mul_pd(q, mf);
+    qm0 = _mm256_sub_pd(t, qm1);
+    __m256d u = _mm256_mul_pd(a, b);
+    ab0 = _mm256_sub_pd(u, ab1);
+#endif
+
+
     r = (ab1 - qm1) + (ab0 - qm0);
     return r;
 }
