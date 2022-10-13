@@ -14,6 +14,10 @@ option(QUICKJS_DUMPLEAKS "Enable the 'dumpleaks' option in QuickJS" ${_QUICKJS_D
 if (QUICKJS_DUMPLEAKS)
     set(quickjs_def ${quickjs_def} DUMP_LEAKS=1)
 endif()
+option(QUICKJS_DISABLE_STACK_CHECK "Disable stack checking, e.g. for use with threads / fibers" ON)
+if (QUICKJS_DISABLE_STACK_CHECK)
+    set(quickjs_def ${quickjs_def} -DDISABLE_STACK_CHECK=1)
+endif()
 
 add_library(quickjs ${quickjs_src})
 target_compile_definitions(quickjs PRIVATE ${quickjs_def})

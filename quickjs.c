@@ -1590,9 +1590,13 @@ static inline uintptr_t js_get_stack_pointer(void)
 
 static inline BOOL js_check_stack_overflow(JSRuntime *rt, size_t alloca_size)
 {
+#if defined(DISABLE_STACK_CHECK)
+    return 0;
+#else
     uintptr_t sp;
     sp = js_get_stack_pointer() - alloca_size;
     return unlikely(sp < rt->stack_limit);
+#endif
 }
 #endif
 
@@ -32593,8 +32597,12 @@ static JSValue js_create_function(JSContext *ctx, JSFunctionDef *fd)
             }
         } else {
             b->vardefs = (void *)((uint8_t*)b + vardefs_offset);
-            memcpy(b->vardefs, fd->args, fd->arg_count * sizeof(fd->args[0]));
-            memcpy(b->vardefs + fd->arg_count, fd->vars, fd->var_count * sizeof(fd->vars[0]));
+            if (!!b->vardefs && fd->arg_count > 0){
+                memcpy(b->vardefs, fd->args, fd->arg_count * sizeof(fd->args[0]));
+            }
+            if (!!fd->vars && fd->var_count > 0){
+                memcpy(b->vardefs + fd->arg_count, fd->vars, fd->var_count * sizeof(fd->vars[0]));
+            }
         }
         b->var_count = fd->var_count;
         b->arg_count = fd->arg_count;
